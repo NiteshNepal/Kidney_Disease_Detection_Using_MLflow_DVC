@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: cnnClassifier
+Version: 0.0.0
+Summary: A small python package for CNN app.
+Home-page: https://github.com/NiteshNepal/Kidney_Disease_Detection_Using_MLflow_DVC
+Author: NiteshNepal
+Author-email: ds.niteshnepal@gmail.com
+Project-URL: Bug Tracker, https://github.com/NiteshNepal/Kidney_Disease_Detection_Using_MLflow_DVC/issues
+
+# Kidney_Disease_Detection_Using_MLflow_DVC
