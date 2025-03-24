@@ -1,10 +1,12 @@
 import tensorflow as tf
 from pathlib import Path
 import mlflow
+import dagshub
 import mlflow.keras
 from urllib.parse import urlparse
 from cnnClassifier.entity.config_entity import EvaluationConfig
-from cnnClassifier.utils.common import save_json
+from cnnClassifier.utils.common import read_yaml, create_directories,save_json
+
 
 class Evaluation:
     def __init__(self, config: EvaluationConfig):
@@ -53,6 +55,9 @@ class Evaluation:
 
     
     def log_into_mlflow(self):
+        dagshub.init(repo_owner='NiteshNepal', repo_name='Kidney_Disease_Detection_Using_MLflow_DVC', mlflow=True)
+
+
         mlflow.set_registry_uri(self.config.mlflow_uri)
         tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
         
