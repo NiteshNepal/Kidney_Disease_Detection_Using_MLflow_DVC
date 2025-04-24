@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kidney Tumor Detection</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #eef2f3, #cfd9df);
+      min-height: 100vh;
+      padding-top: 60px;
+    }
+
+    h3 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 30px;
+      color: #212529;
+    }
+
+    .image-part {
+      height: 300px;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      background-color: #fff;
+      margin: 0 auto 20px;
+      position: relative;
+    }
+
+    .image-part img,
+    .image-part #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .image-part #video {
+      display: block;
+    }
+
+    .btn-part {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn {
+      border-radius: 50px;
+      padding: 10px 25px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background-color: #0b5ed7;
+    }
+
+    .btn-success:hover {
+      background-color: #157347;
+    }
+
+    .res-container {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .res-part, .res-part2 {
+      max-height: 320px;
+      overflow: auto;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .res-part2 img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .jsonRes pre {
+      font-size: 0.85rem;
+      color: #212529;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 9999;
+      display: none;
+    }
+
+    .loader {
+      width: 70px;
+      height: 70px;
+      border: 6px solid #dee2e6;
+      border-top-color: #343a40;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container text-center">
+  <h3>Object Classification</h3>
+  <div class="row justify-content-center">
+    <div class="col-md-6 mb-4">
+      <div class="image-part">
+        <video autoplay id="video"></video>
+        <img id="photo" />
+        <canvas id="canvas" style="display: none;"></canvas>
+      </div>
+
+      <div class="btn-part">
+        <button type="button" class="btn btn-primary" id="uload">Upload</button>
+        <button type="button" class="btn btn-success" id="send">Predict</button>
+      </div>
+      <input name="upload" type="file" id="fileinput" />
+      <input type="hidden" id="url" value="../predict" />
+    </div>
+
+    <div class="col-md-6 res-container">
+      <h5 class="mb-3">Prediction Results</h5>
+      <div class="row g-2">
+        <div class="col-6 res-part2"></div>
+        <div class="col-6 res-part jsonRes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loading"><div class="loader"></div></div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  var base_data = "";
+
+  function sendRequest(base64Data) {
+    if (base64Data) {
+      const url = $("#url").val();
+      $("#loading").show();
+      $.ajax({
+        url: url,
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ image: base64Data }),
+        success: function (res) {
+          $(".res-part2").html("");
+          $(".res-part").html("");
+          try {
+            var imageData = res[1].image;
+            if (imageData && imageData.length > 10) {
+              $(".res-part2").append(`<img src='data:image/jpeg;base64,${imageData}' alt='Result' />`);
+            }
+          } catch (e) {}
+          $(".res-part").html("<pre>" + JSON.stringify(res[0], null, 2) + "</pre>");
+          $("#loading").hide();
+        }
+      });
+    }
+  }
+
+  $(document).ready(function () {
+    $("#loading").hide();
+
+    $('#send').click(() => sendRequest(base_data));
+
+    $('#uload').click(() => $('#fileinput').click());
+
+    $("#fileinput").change(function () {
+      if (this.files && this.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            canvas.height = this.height;
+            canvas.width = this.width;
+            ctx.drawImage(this, 0, 0);
+            base_data = canvas.toDataURL('image/jpeg', 1.0).replace(/^data:image.+;base64,/, '');
+          };
+          img.src = e.target.result;
+          $('#photo').attr('src', e.target.result).show();
+          $('#video').hide();
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
